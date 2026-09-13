@@ -1,0 +1,16 @@
+{
+  "name": "操練品德",
+  "short_name": "操練品德",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "https://api.iconify.design/lucide:heart-handshake.png?color=%23ffffff&width=512&height=512&bg=%23047857",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
