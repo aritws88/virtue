@@ -29,80 +29,83 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 pb-16">
   <div id="app" class="max-w-md mx-auto p-4">
-    <!-- 標頭區塊（含品牌標註） -->
+    <!-- 標頭區塊 -->
     <header class="text-center py-4 mb-4 border-b">
-      <h1 class="text-2xl font-bold text-emerald-700">操練品德</h1>
-      <p class="text-xs font-medium text-emerald-600 tracking-wider mt-0.5">品冠資訊 榮譽出品</p>
-      <p class="text-sm text-slate-500 mt-1">選擇今日項目，踏出微小的一步</p>
+      <h1 class="text-3xl font-bold text-emerald-700">操練品德</h1>
+      <p class="text-sm font-semibold text-emerald-600 tracking-wider mt-1">品冠資訊 榮譽出品</p>
+      <p class="text-base text-slate-500 mt-1">選擇今日項目，踏出微小的一步</p>
     </header>
 
     <!-- 今日修練區 -->
-    <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-emerald-100">
-      <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">今日修練項目</span>
+    <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-emerald-100">
+      <span class="text-sm font-bold text-emerald-600 uppercase tracking-wider">今日修練項目</span>
       <div v-if="todayTask" class="mt-2">
-        <div class="flex justify-between items-start">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">{{ todayTask.name }}</h2>
-            <p class="text-sm text-slate-600 mt-1">{{ todayTask.definition }}</p>
+        <div class="flex justify-between items-start gap-3">
+          <div class="flex-1">
+            <h2 class="text-3xl font-bold text-slate-900 mb-1">{{ todayTask.name }}</h2>
+            <p class="text-base text-slate-600 leading-relaxed">{{ todayTask.definition }}</p>
           </div>
           <button 
             @click="toggleComplete"
             :class="isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50'"
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            class="px-5 py-3 rounded-xl text-base font-bold shrink-0 transition-colors shadow-sm">
             {{ isCompleted ? '已完成 ✓' : '打卡' }}
           </button>
         </div>
       </div>
-      <div v-else class="mt-2 text-slate-400 text-sm py-2">
+      <div v-else class="mt-2 text-slate-400 text-base py-3">
         尚未選擇項目，請從下方清單挑選
       </div>
     </div>
 
     <!-- 條列式分類清單標頭 + 自訂按鈕 -->
-    <div class="flex justify-between items-center mb-3">
-      <h2 class="text-lg font-bold text-slate-900">品德分類庫</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold text-slate-900">品德分類庫</h2>
       <button 
         @click="showAddModal = true" 
-        class="text-xs font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg flex items-center space-x-1">
+        class="text-sm font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3.5 py-2 rounded-xl flex items-center space-x-1 shadow-sm">
         <span>+ 新增自訂品德</span>
       </button>
     </div>
 
     <div class="space-y-3 mb-8">
-      <div v-for="(cat, catIdx) in categories" :key="catIdx" class="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div v-for="(cat, catIdx) in categories" :key="catIdx" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- 分類標頭 -->
         <button 
           @click="cat.open = !cat.open"
-          class="w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-slate-700 hover:bg-slate-50">
+          class="w-full px-5 py-4 flex justify-between items-center text-left font-bold text-lg text-slate-800 hover:bg-slate-50">
           <span>{{ cat.name }} ({{ cat.items.length }})</span>
-          <span>{{ cat.open ? '▲' : '▼' }}</span>
+          <span class="text-base">{{ cat.open ? '▲' : '▼' }}</span>
         </button>
 
+        <!-- 項目列表 -->
         <div v-show="cat.open" class="border-t divide-y divide-slate-100">
           <div 
             v-for="(item, itemIdx) in cat.items" 
             :key="item.id || itemIdx"
-            class="p-4 hover:bg-emerald-50/50 flex justify-between items-center">
+            class="p-4 hover:bg-emerald-50/50 flex justify-between items-center gap-2">
             
             <div @click="selectItem(item)" class="flex-1 cursor-pointer pr-2">
               <div class="flex items-center space-x-2">
-                <span class="font-medium text-slate-900">{{ item.name }}</span>
-                <span v-if="item.isCustom" class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-1.5 py-0.5 rounded">自訂</span>
+                <span class="font-bold text-xl text-slate-900">{{ item.name }}</span>
+                <span v-if="item.isCustom" class="text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-md">自訂</span>
               </div>
-              <div class="text-xs text-slate-500 mt-0.5">{{ item.definition }}</div>
+              <div class="text-sm text-slate-600 mt-1 leading-relaxed">{{ item.definition }}</div>
             </div>
 
-            <div class="flex items-center space-x-3">
+            <!-- 右側操作按鈕群：刪除 + 挑選 -->
+            <div class="flex items-center space-x-3 shrink-0">
               <button 
                 @click.stop="deleteItem(catIdx, itemIdx)" 
-                class="text-slate-300 hover:text-red-500 p-1 text-sm transition-colors"
+                class="text-slate-300 hover:text-red-500 p-1 text-lg transition-colors"
                 title="刪除項目">
                 🗑️
               </button>
-              <span @click="selectItem(item)" class="text-sm font-medium text-emerald-600 cursor-pointer">挑選 &gt;</span>
+              <span @click="selectItem(item)" class="text-base font-bold text-emerald-600 cursor-pointer px-1 py-1">挑選 &gt;</span>
             </div>
           </div>
 
-          <div v-if="cat.items.length === 0" class="p-4 text-xs text-slate-400 text-center">
+          <div v-if="cat.items.length === 0" class="p-4 text-sm text-slate-400 text-center">
             目前此分類無品德項目，可自行新增
           </div>
         </div>
@@ -111,77 +114,77 @@
 
     <!-- 歷史修練日誌區 -->
     <div class="border-t pt-6">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-lg font-bold text-slate-900">修練歷史紀錄</h2>
-        <span class="text-xs text-slate-500">共累積 {{ historyLogs.length }} 次</span>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-slate-900">修練歷史紀錄</h2>
+        <span class="text-sm text-slate-500">共累積 {{ historyLogs.length }} 次</span>
       </div>
 
-      <div v-if="historyLogs.length > 0" class="space-y-2">
+      <div v-if="historyLogs.length > 0" class="space-y-2.5">
         <div 
           v-for="(log, idx) in historyLogs" 
           :key="idx"
-          class="bg-white rounded-lg p-3 border shadow-sm flex justify-between items-center">
+          class="bg-white rounded-xl p-4 border shadow-sm flex justify-between items-center">
           <div>
-            <div class="font-medium text-slate-800">{{ log.name }}</div>
-            <div class="text-xs text-slate-400">{{ log.date }}</div>
+            <div class="font-bold text-lg text-slate-800">{{ log.name }}</div>
+            <div class="text-xs text-slate-400 mt-0.5">{{ log.date }}</div>
           </div>
-          <span class="text-xs bg-emerald-100 text-emerald-700 font-medium px-2 py-1 rounded">已完成</span>
+          <span class="text-sm bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded-lg">已完成</span>
         </div>
       </div>
-      <div v-else class="text-center py-6 text-slate-400 text-sm bg-white rounded-lg border border-dashed">
+      <div v-else class="text-center py-8 text-slate-400 text-base bg-white rounded-xl border border-dashed">
         尚無打卡紀錄，今天完成修練後點擊「打卡」吧！
       </div>
     </div>
 
     <!-- 挑選確認對話框 -->
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl max-w-xs w-full p-5 shadow-xl">
-        <h3 class="text-lg font-bold text-slate-900 mb-1">修練「{{ activeModal.name }}」</h3>
-        <p class="text-sm text-slate-600 mb-4">{{ activeModal.definition }}</p>
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+        <h3 class="text-xl font-bold text-slate-900 mb-2">修練「{{ activeModal.name }}」</h3>
+        <p class="text-base text-slate-600 mb-4 leading-relaxed">{{ activeModal.definition }}</p>
         
-        <div class="mb-5" v-if="activeModal.actions && activeModal.actions.length > 0">
-          <span class="text-xs font-bold text-slate-500 block mb-2">建議行動：</span>
-          <ul class="text-xs space-y-1.5 text-slate-600 list-disc list-inside">
+        <div class="mb-6" v-if="activeModal.actions && activeModal.actions.length > 0">
+          <span class="text-sm font-bold text-slate-700 block mb-2">建議行動：</span>
+          <ul class="text-sm space-y-2 text-slate-600 list-disc list-inside leading-relaxed">
             <li v-for="act in activeModal.actions" :key="act">{{ act }}</li>
           </ul>
         </div>
 
-        <div class="flex space-x-2">
-          <button @click="activeModal = null" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">取消</button>
-          <button @click="confirmTask" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium">設為今日修練</button>
+        <div class="flex space-x-3">
+          <button @click="activeModal = null" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl text-base font-bold">取消</button>
+          <button @click="confirmTask" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-base font-bold">設為今日修練</button>
         </div>
       </div>
     </div>
 
     <!-- 新增自訂品德對話框 -->
     <div v-if="showAddModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl max-w-xs w-full p-5 shadow-xl">
-        <h3 class="text-lg font-bold text-slate-900 mb-3">新增自訂品德</h3>
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+        <h3 class="text-xl font-bold text-slate-900 mb-4">新增自訂品德</h3>
         
-        <div class="space-y-3 mb-5">
+        <div class="space-y-4 mb-6">
           <div>
-            <label class="text-xs font-bold text-slate-600 block mb-1">歸屬分類</label>
-            <select v-model="newVirtue.catIndex" class="w-full text-sm border rounded-lg p-2 bg-slate-50">
+            <label class="text-sm font-bold text-slate-700 block mb-1">歸屬分類</label>
+            <select v-model="newVirtue.catIndex" class="w-full text-base border rounded-xl p-3 bg-slate-50">
               <option v-for="(cat, idx) in categories" :key="idx" :value="idx">{{ cat.name }}</option>
             </select>
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-600 block mb-1">品德名稱</label>
-            <input v-model="newVirtue.name" type="text" placeholder="例如：同理心" class="w-full text-sm border rounded-lg p-2" />
+            <label class="text-sm font-bold text-slate-700 block mb-1">品德名稱</label>
+            <input v-model="newVirtue.name" type="text" placeholder="例如：同理心" class="w-full text-base border rounded-xl p-3" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-600 block mb-1">一句話定義</label>
-            <input v-model="newVirtue.definition" type="text" placeholder="例如：站在對方立場思考問題" class="w-full text-sm border rounded-lg p-2" />
+            <label class="text-sm font-bold text-slate-700 block mb-1">一句話定義</label>
+            <input v-model="newVirtue.definition" type="text" placeholder="例如：站在對方立場思考問題" class="w-full text-base border rounded-xl p-3" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-600 block mb-1">建議行動（選填）</label>
-            <input v-model="newVirtue.action" type="text" placeholder="例如：聽完話不急著下判斷" class="w-full text-sm border rounded-lg p-2" />
+            <label class="text-sm font-bold text-slate-700 block mb-1">建議行動（選填）</label>
+            <input v-model="newVirtue.action" type="text" placeholder="例如：聽完話不急著下判斷" class="w-full text-base border rounded-xl p-3" />
           </div>
         </div>
 
-        <div class="flex space-x-2">
-          <button @click="showAddModal = false" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">取消</button>
-          <button @click="addCustomVirtue" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium">儲存新增</button>
+        <div class="flex space-x-3">
+          <button @click="showAddModal = false" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl text-base font-bold">取消</button>
+          <button @click="addCustomVirtue" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-base font-bold">儲存新增</button>
         </div>
       </div>
     </div>
