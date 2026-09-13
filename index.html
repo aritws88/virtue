@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>操練品德</title>
+  
+  <!-- PWA 全螢幕與主題設定 -->
+  <meta name="theme-color" content="#047857">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="操練品德">
+  <meta name="application-name" content="操練品德">
+
+  <!-- 引入外置 manifest.json 與圖示 -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%23047857'/%3E%3Cpath d='M256 112c-48 0-96 32-96 96 0 72 96 176 96 176s96-104 96-176c0-64-48-96-96-96zm0 144a48 48 0 1 1 0-96 48 48 0 0 1 0 96z' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%23047857'/%3E%3Cpath d='M256 112c-48 0-96 32-96 96 0 72 96 176 96 176s96-104 96-176c0-64-48-96-96-96zm0 144a48 48 0 1 1 0-96 48 48 0 0 1 0 96z' fill='%23ffffff'/%3E%3C/svg%3E">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 pb-16">
+  <div id="app" class="max-w-md mx-auto p-4">
+    <!-- 標頭區塊（含品牌標註） -->
+    <header class="text-center py-4 mb-4 border-b">
+      <h1 class="text-2xl font-bold text-emerald-700">操練品德</h1>
+      <p class="text-xs font-medium text-emerald-600 tracking-wider mt-0.5">品冠資訊 榮譽出品</p>
+      <p class="text-sm text-slate-500 mt-1">選擇今日項目，踏出微小的一步</p>
+    </header>
+
+    <!-- 今日修練區 -->
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-emerald-100">
+      <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">今日修練項目</span>
+      <div v-if="todayTask" class="mt-2">
+        <div class="flex justify-between items-start">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">{{ todayTask.name }}</h2>
+            <p class="text-sm text-slate-600 mt-1">{{ todayTask.definition }}</p>
+          </div>
+          <button 
+            @click="toggleComplete"
+            :class="isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50'"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            {{ isCompleted ? '已完成 ✓' : '打卡' }}
+          </button>
+        </div>
+      </div>
+      <div v-else class="mt-2 text-slate-400 text-sm py-2">
+        尚未選擇項目，請從下方清單挑選
+      </div>
+    </div>
+
+    <!-- 條列式分類清單標頭 + 自訂按鈕 -->
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-lg font-bold text-slate-900">品德分類庫</h2>
+      <button 
+        @click="showAddModal = true" 
+        class="text-xs font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg flex items-center space-x-1">
+        <span>+ 新增自訂品德</span>
+      </button>
+    </div>
+
+    <div class="space-y-3 mb-8">
+      <div v-for="(cat, catIdx) in categories" :key="catIdx" class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <button 
+          @click="cat.open = !cat.open"
+          class="w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-slate-700 hover:bg-slate-50">
+          <span>{{ cat.name }} ({{ cat.items.length }})</span>
+          <span>{{ cat.open ? '▲' : '▼' }}</span>
+        </button>
+
+        <div v-show="cat.open" class="border-t divide-y divide-slate-100">
+          <div 
+            v-for="(item, itemIdx) in cat.items" 
+            :key="item.id || itemIdx"
+            class="p-4 hover:bg-emerald-50/50 flex justify-between items-center">
+            
+            <div @click="selectItem(item)" class="flex-1 cursor-pointer pr-2">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium text-slate-900">{{ item.name }}</span>
+                <span v-if="item.isCustom" class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-1.5 py-0.5 rounded">自訂</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">{{ item.definition }}</div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <button 
+                @click.stop="deleteItem(catIdx, itemIdx)" 
+                class="text-slate-300 hover:text-red-500 p-1 text-sm transition-colors"
+                title="刪除項目">
+                🗑️
+              </button>
+              <span @click="selectItem(item)" class="text-sm font-medium text-emerald-600 cursor-pointer">挑選 &gt;</span>
+            </div>
+          </div>
+
+          <div v-if="cat.items.length === 0" class="p-4 text-xs text-slate-400 text-center">
+            目前此分類無品德項目，可自行新增
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 歷史修練日誌區 -->
+    <div class="border-t pt-6">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-bold text-slate-900">修練歷史紀錄</h2>
+        <span class="text-xs text-slate-500">共累積 {{ historyLogs.length }} 次</span>
+      </div>
+
+      <div v-if="historyLogs.length > 0" class="space-y-2">
+        <div 
+          v-for="(log, idx) in historyLogs" 
+          :key="idx"
+          class="bg-white rounded-lg p-3 border shadow-sm flex justify-between items-center">
+          <div>
+            <div class="font-medium text-slate-800">{{ log.name }}</div>
+            <div class="text-xs text-slate-400">{{ log.date }}</div>
+          </div>
+          <span class="text-xs bg-emerald-100 text-emerald-700 font-medium px-2 py-1 rounded">已完成</span>
+        </div>
+      </div>
+      <div v-else class="text-center py-6 text-slate-400 text-sm bg-white rounded-lg border border-dashed">
+        尚無打卡紀錄，今天完成修練後點擊「打卡」吧！
+      </div>
+    </div>
+
+    <!-- 挑選確認對話框 -->
+    <div v-if="activeModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl max-w-xs w-full p-5 shadow-xl">
+        <h3 class="text-lg font-bold text-slate-900 mb-1">修練「{{ activeModal.name }}」</h3>
+        <p class="text-sm text-slate-600 mb-4">{{ activeModal.definition }}</p>
+        
+        <div class="mb-5" v-if="activeModal.actions && activeModal.actions.length > 0">
+          <span class="text-xs font-bold text-slate-500 block mb-2">建議行動：</span>
+          <ul class="text-xs space-y-1.5 text-slate-600 list-disc list-inside">
+            <li v-for="act in activeModal.actions" :key="act">{{ act }}</li>
+          </ul>
+        </div>
+
+        <div class="flex space-x-2">
+          <button @click="activeModal = null" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">取消</button>
+          <button @click="confirmTask" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium">設為今日修練</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增自訂品德對話框 -->
+    <div v-if="showAddModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl max-w-xs w-full p-5 shadow-xl">
+        <h3 class="text-lg font-bold text-slate-900 mb-3">新增自訂品德</h3>
+        
+        <div class="space-y-3 mb-5">
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">歸屬分類</label>
+            <select v-model="newVirtue.catIndex" class="w-full text-sm border rounded-lg p-2 bg-slate-50">
+              <option v-for="(cat, idx) in categories" :key="idx" :value="idx">{{ cat.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">品德名稱</label>
+            <input v-model="newVirtue.name" type="text" placeholder="例如：同理心" class="w-full text-sm border rounded-lg p-2" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">一句話定義</label>
+            <input v-model="newVirtue.definition" type="text" placeholder="例如：站在對方立場思考問題" class="w-full text-sm border rounded-lg p-2" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">建議行動（選填）</label>
+            <input v-model="newVirtue.action" type="text" placeholder="例如：聽完話不急著下判斷" class="w-full text-sm border rounded-lg p-2" />
+          </div>
+        </div>
+
+        <div class="flex space-x-2">
+          <button @click="showAddModal = false" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">取消</button>
+          <button @click="addCustomVirtue" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium">儲存新增</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue
+    createApp({
+      setup() {
+        const todayTask = ref(null)
+        const isCompleted = ref(false)
+        const activeModal = ref(null)
+        const showAddModal = ref(false)
+        const historyLogs = ref([])
+
+        const newVirtue = ref({
+          catIndex: 0,
+          name: '',
+          definition: '',
+          action: ''
+        })
+
+        const defaultCategories = [
+          {
+            name: "對己（內省與自律）",
+            open: true,
+            items: [
+              { id: 1, name: "誠實", definition: "不誇大成就，坦承不知情的事實。", actions: ["不誇大自己的成就或事蹟", "坦承一個微小的過失"] },
+              { id: 2, name: "節制", definition: "控制慾望與行為，保持理性。", actions: ["提前 30 分鐘放下手機準備入睡", "減少一次衝動消費"] },
+              { id: 3, name: "專注", definition: "聚精會神完成當前的任務。", actions: ["專心工作 25 分鐘不看訊息", "關閉不必要的通知 2 小時"] }
+            ]
+          },
+          {
+            name: "對人（社交與利他）",
+            open: false,
+            items: [
+              { id: 4, name: "感恩", definition: "看見並珍惜他人或環境帶給你的美好。", actions: ["向服務人員明確說聲「謝謝」", "傳訊息表達對親友的感謝"] },
+              { id: 5, name: "傾聽", definition: "專注接納他人的想法與情感。", actions: ["對話時完整聽對方說完而不打斷", "專注眼神交流，不邊看手機"] },
+              { id: 6, name: "禮貌", definition: "展現對他人的尊重與善意。", actions: ["主動向鄰居或同事問好", "進出門時順手為身後的人推住門"] }
+            ]
+          },
+          {
+            name: "對境（心態與情境韌性）",
+            open: false,
+            items: [
+              { id: 7, name: "耐性", definition: "在等待或逆境中保持平靜。", actions: ["排隊時保持平靜，不顯露焦躁", "面對複雜任務時穩紮穩打"] },
+              { id: 8, name: "珍惜", definition: "愛護並妥善對待現有的事物。", actions: ["珍惜食物，完成不浪費的用餐", "妥善照顧與清潔使用的工具"] }
+            ]
+          }
+        ]
+
+        const categories = ref(defaultCategories)
+
+        const selectItem = (item) => { activeModal.value = item }
+
+        const confirmTask = () => {
+          todayTask.value = activeModal.value
+          isCompleted.value = false
+          activeModal.value = null
+          localStorage.setItem('todayTask', JSON.stringify(todayTask.value))
+          localStorage.setItem('isCompleted', 'false')
+        }
+
+        const toggleComplete = () => {
+          isCompleted.value = !isCompleted.value
+          localStorage.setItem('isCompleted', isCompleted.value)
+
+          if (isCompleted.value && todayTask.value) {
+            const todayStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
+            const exists = historyLogs.value.some(log => log.date === todayStr && log.name === todayTask.value.name)
+            if (!exists) {
+              historyLogs.value.unshift({
+                name: todayTask.value.name,
+                date: todayStr
+              })
+              localStorage.setItem('historyLogs', JSON.stringify(historyLogs.value))
+            }
+          }
+        }
+
+        const addCustomVirtue = () => {
+          if (!newVirtue.value.name.trim()) return
+
+          const newItem = {
+            id: Date.now(),
+            name: newVirtue.value.name.trim(),
+            definition: newVirtue.value.definition.trim() || '自訂修練項目',
+            actions: newVirtue.value.action.trim() ? [newVirtue.value.action.trim()] : [],
+            isCustom: true
+          }
+
+          const targetCat = categories.value[newVirtue.value.catIndex]
+          targetCat.items.push(newItem)
+          targetCat.open = true
+
+          saveCategories()
+
+          newVirtue.value.name = ''
+          newVirtue.value.definition = ''
+          newVirtue.value.action = ''
+          showAddModal.value = false
+        }
+
+        const deleteItem = (catIdx, itemIdx) => {
+          const item = categories.value[catIdx].items[itemIdx]
+          if (confirm(`確定要刪除「${item.name}」這個品德項目嗎？`)) {
+            categories.value[catIdx].items.splice(itemIdx, 1)
+            saveCategories()
+          }
+        }
+
+        const saveCategories = () => {
+          localStorage.setItem('virtueCategories', JSON.stringify(categories.value))
+        }
+
+        const loadCategories = () => {
+          const saved = localStorage.getItem('virtueCategories')
+          if (saved) {
+            try {
+              categories.value = JSON.parse(saved)
+            } catch (e) {
+              categories.value = defaultCategories
+            }
+          }
+        }
+
+        onMounted(() => {
+          loadCategories()
+          const savedTask = localStorage.getItem('todayTask')
+          const savedStatus = localStorage.getItem('isCompleted')
+          const savedLogs = localStorage.getItem('historyLogs')
+
+          if (savedTask) todayTask.value = JSON.parse(savedTask)
+          if (savedStatus) isCompleted.value = savedStatus === 'true'
+          if (savedLogs) historyLogs.value = JSON.parse(savedLogs)
+        })
+
+        return { 
+          categories, todayTask, isCompleted, activeModal, showAddModal, newVirtue, historyLogs,
+          selectItem, confirmTask, toggleComplete, addCustomVirtue, deleteItem 
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
